@@ -1,0 +1,2 @@
+docker build -t gocollider .
+docker run --name gocollider -p 8089:8089 -d gocollider -tls=false -room-server=http://192.168.1.95:8080
