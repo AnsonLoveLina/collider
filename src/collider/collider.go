@@ -17,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -66,7 +67,7 @@ func (c *Collider) Run(p int, useTls bool) {
 		}
 		server := &http.Server{Addr: pstr, Handler: nil, TLSConfig: config}
 
-		e = server.ListenAndServeTLS(GetAppPath()+`\src\tls\server.crt`, GetAppPath()+`\src\tls\server.key`)
+		e = server.ListenAndServeTLS(GetAppPath())
 	} else {
 		e = http.ListenAndServe(pstr, nil)
 	}
@@ -76,12 +77,35 @@ func (c *Collider) Run(p int, useTls bool) {
 	}
 }
 
-func GetAppPath() string {
+//+`\src\tls\server.crt`, GetAppPath()+`\src\tls\server.key`
+func GetAppPath() (crtPath string, keyPath string) {
+	var appPath string
+	var err error
+	if appPath, err = filepath.Abs(filepath.Dir(os.Args[0])); err != nil {
+		panic(err)
+	}
 	workPath, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	return workPath
+	crtPath = filepath.Join(workPath, `src`, `tls`, `server.crt`)
+	if !FileExists(crtPath) {
+		crtPath = filepath.Join(appPath, `tls`, `server.crt`)
+	}
+	keyPath = filepath.Join(workPath, `src`, `tls`, `server.key`)
+	if !FileExists(keyPath) {
+		keyPath = filepath.Join(appPath, `tls`, `server.key`)
+	}
+	return
+}
+
+func FileExists(name string) bool {
+	if _, err := os.Stat(name); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
 }
 
 // httpStatusHandler is a HTTP handler that handles GET requests to get the
