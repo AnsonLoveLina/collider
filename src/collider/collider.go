@@ -8,14 +8,15 @@ package collider
 
 import (
 	"crypto/tls"
-	"golang.org/x/net/websocket"
 	"encoding/json"
 	"errors"
+	"golang.org/x/net/websocket"
 	"html"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -49,10 +50,10 @@ func (c *Collider) Run(p int, useTls bool) {
 
 	pstr := ":" + strconv.Itoa(p)
 	if useTls {
-		config := &tls.Config {
+		config := &tls.Config{
 			// Only allow ciphers that support forward secrecy for iOS9 compatibility:
 			// https://developer.apple.com/library/prerelease/ios/technotes/App-Transport-Security-Technote/
-			CipherSuites: []uint16 {
+			CipherSuites: []uint16{
 				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -63,9 +64,9 @@ func (c *Collider) Run(p int, useTls bool) {
 			},
 			PreferServerCipherSuites: true,
 		}
-		server := &http.Server{ Addr: pstr, Handler: nil, TLSConfig: config }
+		server := &http.Server{Addr: pstr, Handler: nil, TLSConfig: config}
 
-		e = server.ListenAndServeTLS(`D:\项目\webrtc\k8s\mount\tls\server.crt`, `D:\项目\webrtc\k8s\mount\tls\server.key`)
+		e = server.ListenAndServeTLS(GetAppPath()+`\src\tls\server.crt`, GetAppPath()+`\src\tls\server.key`)
 	} else {
 		e = http.ListenAndServe(pstr, nil)
 	}
@@ -73,6 +74,14 @@ func (c *Collider) Run(p int, useTls bool) {
 	if e != nil {
 		log.Fatal("Run: " + e.Error())
 	}
+}
+
+func GetAppPath() string {
+	workPath, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return workPath
 }
 
 // httpStatusHandler is a HTTP handler that handles GET requests to get the
